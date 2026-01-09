@@ -105,7 +105,6 @@ const tintedBlocks = {};
 
 function initAssets() {
     // Generate tinted versions of block.png for each piece color
-    // We wait for window onload usually, or assume loaded if in DOM
     const types = ['I', 'L', 'J', 'O', 'Z', 'S', 'T'];
     
     types.forEach(type => {
@@ -123,25 +122,6 @@ function createTintedBlock(img, color) {
     // Draw image
     bCtx.drawImage(img, 0, 0, BLOCK_SIZE, BLOCK_SIZE);
 
-    // Composite operation to tint
-    // 'source-atop' keeps the new drawing (color) only where the existing drawing (img) is opaque
-    // OR 'multiply' to darken
-    // Simple hue tinting: fill a semi-transparent rect
-    bCtx.globalCompositeOperation = 'source-atop';
-    bCtx.fillStyle = color;
-    bCtx.fillRect(0, 0, BLOCK_SIZE, BLOCK_SIZE);
-    
-    // Add a bit of original texture back if needed, or just use multiply
-    // Let's try 'multiply' over the original
-    bCtx.globalCompositeOperation = 'multiply';
-    bCtx.drawImage(img, 0, 0, BLOCK_SIZE, BLOCK_SIZE); // Draw again to add texture shading? 
-    // Actually source-atop with solid color makes it flat silhouette. 
-    // Better approach: 
-    // 1. Draw image
-    // 2. Set globalCompositeOperation = 'multiply'
-    // 3. Fill color rect
-    // 4. Set globalCompositeOperation = 'destination-in' to clip to alpha (not needed if image has transp)
-    
     // Reset to do it properly:
     bCtx.globalCompositeOperation = 'source-over';
     bCtx.clearRect(0,0,BLOCK_SIZE, BLOCK_SIZE);
@@ -182,8 +162,8 @@ function collide(arena, player) {
 
 function draw() {
     // Clear
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; // clearer logic handled in css, but need clear
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Standard clear
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw Arena
     drawMatrix(arena, {x: 0, y: 0}, ctx);
@@ -199,7 +179,6 @@ function drawMatrix(matrix, offset, context, typeOverride = null) {
     matrix.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
-                // Determine color/texture
                 const pieceType = typeOverride || INDEX_TO_PIECE[value];
                 const img = tintedBlocks[pieceType];
                 if (img) {
@@ -208,7 +187,6 @@ function drawMatrix(matrix, offset, context, typeOverride = null) {
                         (y + offset.y) * BLOCK_SIZE, 
                         BLOCK_SIZE, BLOCK_SIZE);
                 } else {
-                    // Fallback
                     context.fillStyle = COLORS[pieceType] || 'white';
                     context.fillRect((x + offset.x) * BLOCK_SIZE,
                                      (y + offset.y) * BLOCK_SIZE,
@@ -230,9 +208,8 @@ function drawGhost() {
     while (!collide(arena, ghost)) {
         ghost.pos.y++;
     }
-    ghost.pos.y--; // Back up one step
+    ghost.pos.y--;
 
-    // Draw ghost with low opacity
     ghost.matrix.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
@@ -329,24 +306,14 @@ function playerRotate(dir) {
 function playerReset() {
     if (nextPieces.length === 0) fillNextPieces();
     
-    // Get next piece
     const type = nextPieces.shift();
     player.matrix = SHAPES[type];
     player.currPieceType = type;
     
-    // Set numeric value in matrix locally for merge
-    // Actually SHAPES has numeric values already from definition? 
-    // Oops, I defined SHAPES with values 1,2,3... above?
-    // Let's re-verify. Yes SHAPES values are 1,2,3... but defined cleanly?
-    // No, I defined them with actual numbers: [0,1,0,0] etc.
-    // Yes.
-    
-    // Position
     player.pos.y = 0;
     player.pos.x = (arena[0].length / 2 | 0) -
                    (player.matrix[0].length / 2 | 0);
 
-    // Check game over
     if (collide(arena, player)) {
         isGameOver = true;
         isGameRunning = false;
@@ -356,7 +323,7 @@ function playerReset() {
     }
 
     canHold = true;
-    fillNextPieces(); // Ensure buffer has pieces
+    fillNextPieces();
     drawNext();
     drawHold();
 }
@@ -372,20 +339,16 @@ function hold() {
     if (!canHold) return;
     
     const currentType = player.currPieceType;
-    // If holding logic
     if (holdPiece) {
-        // Swap
         const temp = holdPiece;
         holdPiece = currentType;
         player.currPieceType = temp;
         player.matrix = SHAPES[temp];
-        // Reset position
         player.pos.y = 0;
         player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
     } else {
         holdPiece = currentType;
-        playerReset(); // Get next piece since we just held current
-        // Wait, playerReset pops next piece. Correct.
+        playerReset();
     }
     
     canHold = false;
@@ -394,11 +357,9 @@ function hold() {
 
 function drawNext() {
     nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-    // Draw next 3 pieces
     nextPieces.slice(0, 3).forEach((type, index) => {
         const matrix = SHAPES[type];
-        // Centering logic approx
-        const offsetX = (nextCanvas.width/BLOCK_SIZE - matrix[0].length) / 2; // rough
+        const offsetX = (nextCanvas.width/BLOCK_SIZE - matrix[0].length) / 2;
         const offsetY = 1 + index * 4;
         
         drawAuxMatrix(matrix, {x: 1, y: offsetY}, nextCtx, type);
@@ -414,11 +375,6 @@ function drawHold() {
 }
 
 function drawAuxMatrix(matrix, offset, context, type) {
-    // Smaller block size for aux ? Or scale context?
-    // 100x100 canvas. Block 30. 3 blocks fits.
-    // Let's use 20px blocks for aux?
-    // Or just scale the context at init.
-    // Let's stick to 25px effective.
     const AUX_BLOCK = 25;
     
     matrix.forEach((row, y) => {
@@ -452,7 +408,6 @@ function arenaSweep() {
     }
     
     if (rowCount > 0) {
-        // Scoring: 100, 300, 500, 800
         const lineScores = [0, 100, 300, 500, 800];
         player.score += lineScores[rowCount] * player.level;
         player.lines += rowCount;
@@ -494,7 +449,7 @@ function startGame() {
     isGameOver = false;
     isGameRunning = true;
     isPaused = false;
-    modalStart.style.display = 'none'; // Use display none/block or class
+    modalStart.style.display = 'none';
     modalStart.classList.add('hidden');
     modalGameOver.classList.add('hidden');
     
@@ -503,20 +458,28 @@ function startGame() {
     update();
 }
 
-// Controls
+function togglePause() {
+    if (!isGameRunning && !isGameOver) return;
+    if (isGameOver) return;
+    
+    isPaused = !isPaused;
+    if (isPaused) {
+        modalPause.classList.remove('hidden');
+    } else {
+        modalPause.classList.add('hidden');
+        lastTime = performance.now();
+        update(lastTime);
+    }
+}
+
+// ========================================
+// Keyboard Controls
+// ========================================
 document.addEventListener('keydown', event => {
     if (isGameOver) return;
     
     if (event.key === 'p' || event.key === 'P') {
-        if (!isGameRunning && !isGameOver) return; // Not started yet
-        isPaused = !isPaused;
-        if (isPaused) {
-            modalPause.classList.remove('hidden');
-        } else {
-            modalPause.classList.add('hidden');
-            lastTime = performance.now();
-            update(lastTime);
-        }
+        togglePause();
         return;
     }
 
@@ -556,7 +519,266 @@ resumeBtn.addEventListener('click', () => {
     update(lastTime);
 });
 
+// ========================================
+// Mobile Touch Controls
+// ========================================
+
+// Touch control buttons
+const btnLeft = document.getElementById('btn-left');
+const btnRight = document.getElementById('btn-right');
+const btnDown = document.getElementById('btn-down');
+const btnRotate = document.getElementById('btn-rotate');
+const btnHardDrop = document.getElementById('btn-hard-drop');
+const btnHold = document.getElementById('btn-hold');
+const btnPause = document.getElementById('btn-pause');
+
+// Prevent default touch behavior to avoid scrolling
+function preventTouchDefault(e) {
+    e.preventDefault();
+}
+
+// Add visual feedback for button press
+function addButtonFeedback(btn) {
+    btn.classList.add('active');
+}
+
+function removeButtonFeedback(btn) {
+    btn.classList.remove('active');
+}
+
+// Auto-repeat for movement buttons
+let moveInterval = null;
+let moveDirection = 0;
+
+function startAutoMove(dir) {
+    if (!isGameRunning || isPaused || isGameOver) return;
+    
+    moveDirection = dir;
+    playerMove(dir);
+    
+    // Start auto-repeat after initial delay
+    clearInterval(moveInterval);
+    moveInterval = setInterval(() => {
+        if (isGameRunning && !isPaused && !isGameOver) {
+            playerMove(moveDirection);
+        }
+    }, 80); // Repeat rate
+}
+
+function stopAutoMove() {
+    clearInterval(moveInterval);
+    moveInterval = null;
+}
+
+// Auto-repeat for soft drop
+let softDropInterval = null;
+
+function startSoftDrop() {
+    if (!isGameRunning || isPaused || isGameOver) return;
+    
+    playerDrop();
+    
+    clearInterval(softDropInterval);
+    softDropInterval = setInterval(() => {
+        if (isGameRunning && !isPaused && !isGameOver) {
+            playerDrop();
+        }
+    }, 50); // Fast drop rate
+}
+
+function stopSoftDrop() {
+    clearInterval(softDropInterval);
+    softDropInterval = null;
+}
+
+// Setup touch event listeners for each button
+if (btnLeft) {
+    btnLeft.addEventListener('touchstart', (e) => {
+        preventTouchDefault(e);
+        addButtonFeedback(btnLeft);
+        startAutoMove(-1);
+    }, { passive: false });
+    
+    btnLeft.addEventListener('touchend', (e) => {
+        preventTouchDefault(e);
+        removeButtonFeedback(btnLeft);
+        stopAutoMove();
+    }, { passive: false });
+    
+    btnLeft.addEventListener('touchcancel', (e) => {
+        removeButtonFeedback(btnLeft);
+        stopAutoMove();
+    });
+}
+
+if (btnRight) {
+    btnRight.addEventListener('touchstart', (e) => {
+        preventTouchDefault(e);
+        addButtonFeedback(btnRight);
+        startAutoMove(1);
+    }, { passive: false });
+    
+    btnRight.addEventListener('touchend', (e) => {
+        preventTouchDefault(e);
+        removeButtonFeedback(btnRight);
+        stopAutoMove();
+    }, { passive: false });
+    
+    btnRight.addEventListener('touchcancel', (e) => {
+        removeButtonFeedback(btnRight);
+        stopAutoMove();
+    });
+}
+
+if (btnDown) {
+    btnDown.addEventListener('touchstart', (e) => {
+        preventTouchDefault(e);
+        addButtonFeedback(btnDown);
+        startSoftDrop();
+    }, { passive: false });
+    
+    btnDown.addEventListener('touchend', (e) => {
+        preventTouchDefault(e);
+        removeButtonFeedback(btnDown);
+        stopSoftDrop();
+    }, { passive: false });
+    
+    btnDown.addEventListener('touchcancel', (e) => {
+        removeButtonFeedback(btnDown);
+        stopSoftDrop();
+    });
+}
+
+if (btnRotate) {
+    btnRotate.addEventListener('touchstart', (e) => {
+        preventTouchDefault(e);
+        addButtonFeedback(btnRotate);
+        if (isGameRunning && !isPaused && !isGameOver) {
+            playerRotate(1);
+        }
+    }, { passive: false });
+    
+    btnRotate.addEventListener('touchend', (e) => {
+        preventTouchDefault(e);
+        removeButtonFeedback(btnRotate);
+    }, { passive: false });
+}
+
+if (btnHardDrop) {
+    btnHardDrop.addEventListener('touchstart', (e) => {
+        preventTouchDefault(e);
+        addButtonFeedback(btnHardDrop);
+        if (isGameRunning && !isPaused && !isGameOver) {
+            playerHardDrop();
+        }
+    }, { passive: false });
+    
+    btnHardDrop.addEventListener('touchend', (e) => {
+        preventTouchDefault(e);
+        removeButtonFeedback(btnHardDrop);
+    }, { passive: false });
+}
+
+if (btnHold) {
+    btnHold.addEventListener('touchstart', (e) => {
+        preventTouchDefault(e);
+        addButtonFeedback(btnHold);
+        if (isGameRunning && !isPaused && !isGameOver) {
+            hold();
+        }
+    }, { passive: false });
+    
+    btnHold.addEventListener('touchend', (e) => {
+        preventTouchDefault(e);
+        removeButtonFeedback(btnHold);
+    }, { passive: false });
+}
+
+if (btnPause) {
+    btnPause.addEventListener('touchstart', (e) => {
+        preventTouchDefault(e);
+        addButtonFeedback(btnPause);
+        togglePause();
+    }, { passive: false });
+    
+    btnPause.addEventListener('touchend', (e) => {
+        preventTouchDefault(e);
+        removeButtonFeedback(btnPause);
+    }, { passive: false });
+}
+
+// ========================================
+// Swipe Gesture Controls on Game Canvas
+// ========================================
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchStartTime = 0;
+const SWIPE_THRESHOLD = 30;
+const TAP_THRESHOLD = 10;
+const TAP_TIME_THRESHOLD = 200;
+
+canvas.addEventListener('touchstart', (e) => {
+    if (!isGameRunning || isPaused || isGameOver) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    touchStartTime = Date.now();
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+    if (!isGameRunning || isPaused || isGameOver) return;
+    
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+    const deltaTime = Date.now() - touchStartTime;
+    
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    
+    // Check if it's a tap (quick touch with minimal movement) -> Rotate
+    if (absX < TAP_THRESHOLD && absY < TAP_THRESHOLD && deltaTime < TAP_TIME_THRESHOLD) {
+        playerRotate(1);
+        return;
+    }
+    
+    // Swipe detection
+    if (absX > SWIPE_THRESHOLD || absY > SWIPE_THRESHOLD) {
+        if (absX > absY) {
+            // Horizontal swipe
+            if (deltaX > 0) {
+                playerMove(1); // Right
+            } else {
+                playerMove(-1); // Left
+            }
+        } else {
+            // Vertical swipe
+            if (deltaY > 0) {
+                // Swipe down -> Hard drop
+                playerHardDrop();
+            }
+            // Swipe up could be rotate, but we use tap for that
+        }
+    }
+}, { passive: false });
+
+// Prevent scrolling when touching the game area
+document.querySelector('.game-wrapper').addEventListener('touchmove', (e) => {
+    e.preventDefault();
+}, { passive: false });
+
+// ========================================
 // Init
+// ========================================
 window.addEventListener('load', () => {
     initAssets();
+    
+    // Detect if touch device and show/hide controls accordingly
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+        document.body.classList.add('touch-device');
+    }
 });

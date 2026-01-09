@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat Tetris (냥트리스)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cat Tetris (냥트리스) v2.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
@@ -58,7 +58,7 @@
                     <h2>NEXT</h2>
                     <canvas id="next-canvas" width="100" height="300"></canvas>
                 </div>
-                <div class="controls-info">
+                <div class="controls-info desktop-only">
                     <p>← → : Move</p>
                     <p>↑ : Rotate</p>
                     <p>↓ : Soft Drop</p>
@@ -68,6 +68,37 @@
                 </div>
             </div>
         </main>
+
+        <!-- Mobile Touch Controls -->
+        <div class="mobile-controls" id="mobile-controls">
+            <div class="control-row top-row">
+                <button class="touch-btn rotate-btn" id="btn-rotate">
+                    <span class="btn-icon">↻</span>
+                </button>
+                <button class="touch-btn hold-btn" id="btn-hold">
+                    <span class="btn-icon">H</span>
+                </button>
+            </div>
+            <div class="control-row middle-row">
+                <button class="touch-btn move-btn" id="btn-left">
+                    <span class="btn-icon">◀</span>
+                </button>
+                <button class="touch-btn drop-btn" id="btn-hard-drop">
+                    <span class="btn-icon">⬇⬇</span>
+                </button>
+                <button class="touch-btn move-btn" id="btn-right">
+                    <span class="btn-icon">▶</span>
+                </button>
+            </div>
+            <div class="control-row bottom-row">
+                <button class="touch-btn soft-drop-btn" id="btn-down">
+                    <span class="btn-icon">▼</span>
+                </button>
+                <button class="touch-btn pause-btn" id="btn-pause">
+                    <span class="btn-icon">⏸</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Hidden assets for loading -->
