@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Tetris (냥트리스)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-container"></div>
+    <div class="overlay"></div>
+
+    <div class="game-wrapper">
+        <header>
+            <h1>CAT TETRIS</h1>
+        </header>
+
+        <main class="game-container">
+            <div class="sidebar left">
+                <div class="panel hold-panel">
+                    <h2>HOLD</h2>
+                    <canvas id="hold-canvas" width="100" height="100"></canvas>
+                </div>
+                <div class="panel score-panel">
+                    <h2>SCORE</h2>
+                    <div id="score">0</div>
+                    <h2>LEVEL</h2>
+                    <div id="level">1</div>
+                    <h2>LINES</h2>
+                    <div id="lines">0</div>
+                </div>
+            </div>
+
+            <div class="game-board-container">
+                <canvas id="game-canvas" width="300" height="600"></canvas>
+                <div id="game-over-modal" class="modal hidden">
+                    <img src="assets/gameover.png" alt="Game Over" class="game-over-img">
+                    <h2>GAME OVER</h2>
+                    <p>Score: <span id="final-score">0</span></p>
+                    <button id="restart-btn">Try Again</button>
+                </div>
+                <div id="pause-modal" class="modal hidden">
+                    <h2>PAUSED</h2>
+                    <button id="resume-btn">Resume</button>
+                </div>
+                <div id="start-modal" class="modal">
+                    <h2>CAT TETRIS</h2>
+                    <p>Press Start to Play!</p>
+                    <button id="start-btn">Start Game</button>
+                </div>
+            </div>
+
+            <div class="sidebar right">
+                <div class="panel next-panel">
+                    <h2>NEXT</h2>
+                    <canvas id="next-canvas" width="100" height="300"></canvas>
+                </div>
+                <div class="controls-info">
+                    <p>← → : Move</p>
+                    <p>↑ : Rotate</p>
+                    <p>↓ : Soft Drop</p>
+                    <p>Space : Hard Drop</p>
+                    <p>C : Hold</p>
+                    <p>P : Pause</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden assets for loading -->
+    <img id="asset-block" src="assets/block.png" style="display:none;">
+    <img id="asset-bg" src="assets/bg.png" style="display:none;">
+
+    <script src="script.js"></script>
+</body>
+</html>
